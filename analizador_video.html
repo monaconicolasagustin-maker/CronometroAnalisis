@@ -2,408 +2,709 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Analizador de video</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Analizador de Video</title>
 <style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500&display=swap');
+
 *{box-sizing:border-box;margin:0;padding:0;}
-body{font-family:system-ui,sans-serif;background:#f0f0ed;color:#1a1a1a;}
-.app{max-width:980px;margin:0 auto;padding:0.6rem;}
+body{background:#111;color:#f0ede8;font-family:'Barlow',sans-serif;min-height:100vh;}
 
-/* TIMER */
-.timer-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:#fff;border:1px solid #ddd;border-radius:12px;padding:0.6rem 1rem;margin-bottom:0.6rem;}
-#timerDisplay{font-size:38px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:2px;min-width:130px;color:#1a1a1a;}
-.period-badge{font-size:13px;font-weight:700;padding:4px 12px;border-radius:8px;background:#dbeafe;color:#1e40af;white-space:nowrap;}
-.ctrl-btns{display:flex;gap:5px;flex-wrap:wrap;align-items:center;}
-.btn{border:1px solid #ccc;background:#fff;color:#1a1a1a;border-radius:8px;padding:6px 12px;font-size:13px;cursor:pointer;transition:background 0.12s;white-space:nowrap;}
-.btn:hover{background:#f0f0ee;}
-.btn:active{transform:scale(0.97);}
-.btn-play{background:#1D9E75;color:#fff;border-color:#0F6E56;font-weight:700;}
-.btn-play:hover{background:#0F6E56;}
-.btn-danger{background:#dc2626;color:#fff;border-color:#b91c1c;font-weight:700;}
-.btn-danger:hover{background:#b91c1c;}
-.btn-warning{background:#d97706;color:#fff;border-color:#b45309;font-weight:700;}
-.btn-warning:hover{background:#b45309;}
-.btn-undo{background:#fef3c7;color:#92400e;border-color:#fcd34d;font-weight:600;}
-.btn-undo:hover{background:#fde68a;}
-.jump-group{display:flex;align-items:center;gap:5px;}
-.jump-group input{width:65px;border:1px solid #ccc;border-radius:8px;padding:6px 8px;font-size:13px;text-align:center;}
-.jump-group input:focus{outline:2px solid #1D9E75;border-color:#1D9E75;}
+.app{max-width:700px;margin:0 auto;}
 
-/* SESSION */
-.session-wrap{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
-.col-wrap{}
-.col-header-row{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:4px;padding:0 1px;}
-.col-label{font-size:11px;font-weight:700;color:#aaa;text-align:center;text-transform:uppercase;letter-spacing:0.5px;}
-
-/* SECTION LABEL */
-.section-label{font-size:13px;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:0.5px;padding:6px 10px;border-radius:6px;margin:6px 0 4px;display:block;}
-.sl-salida{background:#374151;}
-.sl-presion{background:#1e40af;}
-.sl-ataque{background:#7c3aed;}
-.sl-prog{background:#065f46;}
-.sl-propio{background:#9f1239;}
-
-/* SPLIT BTN */
-.actions-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:2px;}
-.split-btn{display:grid;grid-template-columns:1fr 1fr;border:1px solid #ddd;border-radius:7px;overflow:hidden;background:#fff;}
-.split-left{padding:6px 4px;font-size:11px;color:#555;background:#f9f9f7;text-align:center;border-right:1px solid #eee;cursor:pointer;line-height:1.3;transition:background 0.1s;}
-.split-left:hover{background:#e5e5e0;}
-.split-right{padding:6px 4px;font-size:11px;color:#1a1a1a;background:#fff;text-align:center;cursor:pointer;line-height:1.3;transition:background 0.1s;}
-.split-right:hover{background:#dbeafe;}
-.split-right.recording{background:#1e40af;color:#fff;font-weight:700;}
-.count-badge{display:inline-block;font-size:10px;background:#e5e5e0;color:#555;padding:1px 5px;border-radius:10px;margin-left:2px;}
-
-/* SESSION BTNS */
-.divider{height:1px;background:#ddd;margin:0.6rem 0;}
-.session-btns{display:flex;gap:8px;flex-wrap:wrap;}
-
-/* RESULT */
-.resultado-section{margin-top:0.6rem;}
-.resultado-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:0.75rem;}
-.resultado-title{font-size:18px;font-weight:700;}
-.cat-block{background:#fff;border:1px solid #ddd;border-radius:8px;margin-bottom:8px;overflow:hidden;}
-.cat-name{font-size:13px;font-weight:700;color:#1a1a1a;padding:7px 14px;background:#f0f0ed;border-bottom:1px solid #eee;}
-.entry-row{display:flex;justify-content:space-between;align-items:center;padding:5px 14px;border-bottom:1px solid #f0f0ee;}
-.entry-row:last-child{border-bottom:none;}
-.entry-text{font-size:13px;color:#333;}
-.entry-del{background:none;border:none;color:#dc2626;cursor:pointer;font-size:18px;padding:0 4px;line-height:1;}
-.copy-area{background:#f5f5f2;border:1px solid #ddd;border-radius:8px;padding:14px;font-size:12px;font-family:monospace;color:#1a1a1a;white-space:pre-wrap;margin-bottom:8px;max-height:220px;overflow-y:auto;}
-.hidden{display:none;}
-
-/* MOBILE */
-@media(max-width:600px){
-  body{font-size:14px;}
-  .app{padding:0.4rem;}
-  #timerDisplay{font-size:32px;min-width:110px;}
-  .ctrl-btns{gap:4px;}
-  .btn{padding:8px 10px;font-size:12px;}
-  .session-wrap{grid-template-columns:1fr;}
-  .col-header-row{display:none;}
-  .actions-grid{grid-template-columns:1fr;}
-  .split-btn{grid-template-columns:1fr 1fr;}
-  .split-left,.split-right{padding:10px 6px;font-size:13px;}
-  .section-label{font-size:14px;padding:8px 12px;margin:8px 0 6px;}
+/* ── HEADER FIJO ── */
+.header{
+  position:sticky;top:0;z-index:100;
+  background:#111;border-bottom:1px solid #222;
+  padding:10px 12px 8px;
 }
+
+/* cronometro */
+.timer-row{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
+#timerDisplay{
+  font-family:'DM Mono',monospace;font-size:42px;font-weight:500;
+  letter-spacing:2px;min-width:130px;color:#f0ede8;
+}
+.period-pill{
+  font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;
+  text-transform:uppercase;letter-spacing:1px;
+  padding:4px 12px;border-radius:20px;
+  background:#1a3a5c;color:#7ec8f7;white-space:nowrap;
+}
+
+/* posesion */
+.pos-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:5px;margin-bottom:5px;}
+.pos-btn{
+  font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;
+  text-transform:uppercase;letter-spacing:0.5px;
+  padding:9px 4px;border-radius:7px;border:none;cursor:pointer;
+  text-align:center;transition:all 0.15s;
+}
+.pos-btn:active{transform:scale(0.96);}
+.pos-propio{background:#1a3a2a;color:#5de8a0;}
+.pos-propio.active{background:#1D9E75;color:#fff;}
+.pos-fuera{background:#2a2a1a;color:#e8d05d;}
+.pos-fuera.active{background:#b8970a;color:#fff;}
+.pos-rival{background:#3a1a1a;color:#f77e7e;}
+.pos-rival.active{background:#c0392b;color:#fff;}
+.pos-pcts{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-bottom:6px;}
+.pos-pct{font-size:11px;color:#555;text-align:center;}
+.pos-pct span{color:#aaa;font-weight:600;}
+
+/* controles */
+.ctrl-row{display:flex;gap:5px;flex-wrap:wrap;}
+.btn-c{
+  font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;
+  text-transform:uppercase;border-radius:7px;border:1px solid #2a2a2a;
+  background:#1a1a1a;color:#aaa;padding:9px 12px;cursor:pointer;
+  transition:all 0.12s;flex:1;text-align:center;white-space:nowrap;
+}
+.btn-c:active{transform:scale(0.96);}
+.btn-play{background:#1D9E75;color:#fff;border-color:#1D9E75;flex:2;}
+.btn-play:hover{background:#0F6E56;}
+.btn-undo{background:#2a1a00;color:#e8a05d;border-color:#3a2a00;}
+.jump-row{display:flex;gap:5px;margin-top:5px;}
+.jump-input{
+  flex:1;background:#1a1a1a;border:1px solid #2a2a2a;color:#f0ede8;
+  border-radius:7px;padding:9px 10px;font-family:'DM Mono',monospace;font-size:14px;text-align:center;
+}
+.jump-input:focus{outline:2px solid #1D9E75;}
+.btn-jump{
+  font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;
+  background:#1a1a1a;border:1px solid #2a2a2a;color:#aaa;
+  border-radius:7px;padding:9px 16px;cursor:pointer;white-space:nowrap;
+}
+
+/* ── CONTENT ── */
+.content{padding:10px 12px 90px;}
+
+.sec-header{
+  font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:700;
+  text-transform:uppercase;letter-spacing:1px;
+  padding:8px 12px;border-radius:7px;margin:12px 0 7px;
+  display:block;
+}
+.sh-aprox{background:#1a2a3a;color:#7ec8f7;}
+.sh-peligro-p{background:#1e1a2e;color:#c77ef7;}
+.sh-peligro-r{background:#2e1a1a;color:#f77e7e;}
+.sh-mov{background:#1a3a1a;color:#5de8a0;}
+.sh-def{background:#2e2a1a;color:#e8c05d;}
+
+/* action buttons 2 col */
+.action-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:4px;}
+.action-btn{
+  font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:600;
+  padding:14px 8px;border-radius:8px;border:none;cursor:pointer;
+  text-align:center;transition:all 0.12s;
+  display:flex;flex-direction:column;align-items:center;gap:3px;
+}
+.action-btn:active{transform:scale(0.96);}
+.btn-propio{background:#1a2a3a;color:#7ec8f7;}
+.btn-rival{background:#2a1a1a;color:#f77e7e;}
+.cnt{
+  font-size:12px;font-weight:700;
+  background:rgba(0,0,0,0.35);
+  padding:2px 8px;border-radius:10px;min-width:26px;
+}
+
+/* peligro block */
+.peligro-label{
+  font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;
+  text-transform:uppercase;letter-spacing:0.5px;
+  padding:6px 10px;border-radius:6px;margin-bottom:5px;
+  display:flex;justify-content:space-between;align-items:center;
+}
+.pl-propio{background:#1e1a2e;color:#c77ef7;}
+.pl-rival{background:#2e1a1a;color:#f77e7e;}
+.peligro-total{font-size:16px;font-weight:700;}
+.sub-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-bottom:8px;}
+.sub-btn{
+  font-family:'Barlow',sans-serif;font-size:12px;font-weight:500;
+  padding:10px 6px;border-radius:6px;border:none;cursor:pointer;
+  text-align:center;transition:all 0.12s;line-height:1.3;
+}
+.sub-btn:active{transform:scale(0.95);}
+.sub-propio{background:#1e1a2e;color:#c77ef7;border:1px solid #2e2a4e;}
+.sub-rival{background:#2e1a1a;color:#f77e7e;border:1px solid #4e2a2a;}
+
+/* solo propio grid */
+.solo-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+.solo-btn{
+  font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:600;
+  padding:13px 8px;border-radius:8px;border:none;cursor:pointer;
+  text-align:center;transition:all 0.12s;
+  display:flex;flex-direction:column;align-items:center;gap:3px;
+}
+.solo-btn:active{transform:scale(0.96);}
+.s-green{background:#1a2e1a;color:#5de8a0;}
+.s-red{background:#2e1a1a;color:#f77e7e;}
+.s-yellow{background:#2e2a1a;color:#e8d05d;}
+.s-blue{background:#1a1a2e;color:#7e9ef7;}
+
+/* bottom bar */
+.bottom-bar{
+  position:fixed;bottom:0;left:0;right:0;
+  background:#111;border-top:1px solid #222;
+  padding:8px 12px;
+  display:flex;gap:6px;
+  max-width:700px;margin:0 auto;
+}
+@media(min-width:700px){
+  .bottom-bar{left:50%;transform:translateX(-50%);width:700px;}
+}
+.btn-sess{
+  font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;
+  text-transform:uppercase;letter-spacing:0.5px;
+  padding:11px;border-radius:8px;border:none;cursor:pointer;flex:1;
+}
+.btn-halftime{background:#2a1f00;color:#e8c05d;}
+.btn-halftime:active{background:#3a2f00;}
+.btn-end{background:#3a0000;color:#f77e7e;}
+.btn-end:active{background:#4a0000;}
+
+/* flash */
+@keyframes flash{0%{filter:brightness(2);}100%{filter:brightness(1);}}
+.flashing{animation:flash 0.2s ease-out;}
+
+/* ── RESULT ── */
+.result-wrap{padding:12px 12px 80px;}
+.result-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;}
+.result-title{font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#f0ede8;}
+.btn-new{
+  font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;
+  text-transform:uppercase;padding:8px 16px;border-radius:7px;
+  background:#1a1a1a;border:1px solid #2a2a2a;color:#aaa;cursor:pointer;
+}
+.copy-area{
+  background:#1a1a1a;border:1px solid #2a2a2a;border-radius:8px;
+  padding:14px;font-size:12px;font-family:'DM Mono',monospace;color:#f0ede8;
+  white-space:pre-wrap;margin-bottom:10px;max-height:260px;overflow-y:auto;
+  line-height:1.6;
+}
+.btn-copy{
+  font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;
+  text-transform:uppercase;padding:10px 20px;border-radius:7px;
+  background:#1D9E75;color:#fff;border:none;cursor:pointer;margin-bottom:16px;
+}
+.entries-list{}
+.cat-block{background:#1a1a1a;border:1px solid #222;border-radius:8px;margin-bottom:8px;overflow:hidden;}
+.cat-name{font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;padding:8px 14px;background:#222;border-bottom:1px solid #2a2a2a;color:#aaa;}
+.entry-row{display:flex;justify-content:space-between;align-items:center;padding:6px 14px;border-bottom:1px solid #222;}
+.entry-row:last-child{border-bottom:none;}
+.entry-text{font-size:13px;color:#ccc;font-family:'Barlow',sans-serif;}
+.entry-del{background:none;border:none;color:#c0392b;cursor:pointer;font-size:18px;padding:0 4px;line-height:1;}
+
+.hidden{display:none;}
 </style>
 </head>
 <body>
 <div class="app">
 
-  <div class="timer-bar">
+<!-- HEADER -->
+<div class="header">
+  <div class="timer-row">
     <div id="timerDisplay">00:00</div>
-    <div class="period-badge" id="periodBadge">1° tiempo</div>
-    <div class="ctrl-btns">
-      <button class="btn btn-play" id="playBtn" onclick="togglePlay()">Play</button>
-      <button class="btn" onclick="adjustTime(-30)">-30s</button>
-      <button class="btn" onclick="adjustTime(-10)">-10s</button>
-      <button class="btn" onclick="adjustTime(10)">+10s</button>
-      <button class="btn" onclick="adjustTime(30)">+30s</button>
-      <div class="jump-group">
-        <input type="text" id="jumpInput" placeholder="mm:ss" maxlength="5"/>
-        <button class="btn" onclick="jumpTo()">Ir</button>
-      </div>
-      <button class="btn btn-undo" onclick="undoLast()">Deshacer</button>
-    </div>
+    <div class="period-pill" id="periodPill">1° Tiempo</div>
   </div>
 
-  <div id="sessionView">
-    <div class="col-header-row">
-      <div class="col-label">Propio</div>
-      <div class="col-label">Rival</div>
-    </div>
-
-    <span class="section-label sl-salida">Salida y saque</span>
-    <div class="actions-grid">
-      <div class="split-btn">
-        <div class="split-left" onclick="countOnly('salida','Propio')">Salida abajo P<br><span class="count-badge" id="cnt-salida-Propio">0</span></div>
-        <div class="split-right" id="sr-salida-Propio" onclick="toggleTime('salida','Propio')">+ tiempo</div>
-      </div>
-      <div class="split-btn">
-        <div class="split-left" onclick="countOnly('salida','Rival')">Salida abajo R<br><span class="count-badge" id="cnt-salida-Rival">0</span></div>
-        <div class="split-right" id="sr-salida-Rival" onclick="toggleTime('salida','Rival')">+ tiempo</div>
-      </div>
-      <div class="split-btn">
-        <div class="split-left" onclick="countOnly('saque','Propio')">Saque arco P<br><span class="count-badge" id="cnt-saque-Propio">0</span></div>
-        <div class="split-right" id="sr-saque-Propio" onclick="toggleTime('saque','Propio')">+ tiempo</div>
-      </div>
-      <div class="split-btn">
-        <div class="split-left" onclick="countOnly('saque','Rival')">Saque arco R<br><span class="count-badge" id="cnt-saque-Rival">0</span></div>
-        <div class="split-right" id="sr-saque-Rival" onclick="toggleTime('saque','Rival')">+ tiempo</div>
-      </div>
-    </div>
-
-    <span class="section-label sl-presion">Presión</span>
-    <div class="actions-grid">
-      <div class="split-btn">
-        <div class="split-left" onclick="countOnly('presionAlta','Propio')">Bloque alto P<br><span class="count-badge" id="cnt-presionAlta-Propio">0</span></div>
-        <div class="split-right" id="sr-presionAlta-Propio" onclick="toggleTime('presionAlta','Propio')">+ tiempo</div>
-      </div>
-      <div class="split-btn">
-        <div class="split-left" onclick="countOnly('presionAlta','Rival')">Bloque alto R<br><span class="count-badge" id="cnt-presionAlta-Rival">0</span></div>
-        <div class="split-right" id="sr-presionAlta-Rival" onclick="toggleTime('presionAlta','Rival')">+ tiempo</div>
-      </div>
-      <div class="split-btn">
-        <div class="split-left" onclick="countOnly('presionMedia','Propio')">Bloque medio P<br><span class="count-badge" id="cnt-presionMedia-Propio">0</span></div>
-        <div class="split-right" id="sr-presionMedia-Propio" onclick="toggleTime('presionMedia','Propio')">+ tiempo</div>
-      </div>
-      <div class="split-btn">
-        <div class="split-left" onclick="countOnly('presionMedia','Rival')">Bloque medio R<br><span class="count-badge" id="cnt-presionMedia-Rival">0</span></div>
-        <div class="split-right" id="sr-presionMedia-Rival" onclick="toggleTime('presionMedia','Rival')">+ tiempo</div>
-      </div>
-      <div class="split-btn">
-        <div class="split-left" onclick="countOnly('presionBaja','Propio')">Bloque bajo P<br><span class="count-badge" id="cnt-presionBaja-Propio">0</span></div>
-        <div class="split-right" id="sr-presionBaja-Propio" onclick="toggleTime('presionBaja','Propio')">+ tiempo</div>
-      </div>
-      <div class="split-btn">
-        <div class="split-left" onclick="countOnly('presionBaja','Rival')">Bloque bajo R<br><span class="count-badge" id="cnt-presionBaja-Rival">0</span></div>
-        <div class="split-right" id="sr-presionBaja-Rival" onclick="toggleTime('presionBaja','Rival')">+ tiempo</div>
-      </div>
-    </div>
-
-    <span class="section-label sl-ataque">Ataque y peligro</span>
-    <div class="actions-grid">
-      <div class="split-btn">
-        <div class="split-left" onclick="countOnly('peligro','Propio')">Sit. peligro P<br><span class="count-badge" id="cnt-peligro-Propio">0</span></div>
-        <div class="split-right" id="sr-peligro-Propio" onclick="toggleTime('peligro','Propio')">+ tiempo</div>
-      </div>
-      <div class="split-btn">
-        <div class="split-left" onclick="countOnly('peligro','Rival')">Sit. peligro R<br><span class="count-badge" id="cnt-peligro-Rival">0</span></div>
-        <div class="split-right" id="sr-peligro-Rival" onclick="toggleTime('peligro','Rival')">+ tiempo</div>
-      </div>
-      <div class="split-btn">
-        <div class="split-left" onclick="countOnly('aprox','Propio')">Aprox. arco P<br><span class="count-badge" id="cnt-aprox-Propio">0</span></div>
-        <div class="split-right" id="sr-aprox-Propio" onclick="toggleTime('aprox','Propio')">+ tiempo</div>
-      </div>
-      <div class="split-btn">
-        <div class="split-left" onclick="countOnly('aprox','Rival')">Aprox. arco R<br><span class="count-badge" id="cnt-aprox-Rival">0</span></div>
-        <div class="split-right" id="sr-aprox-Rival" onclick="toggleTime('aprox','Rival')">+ tiempo</div>
-      </div>
-      <div class="split-btn">
-        <div class="split-left" onclick="countOnly('tiroLibre','Propio')">Tiro libre P<br><span class="count-badge" id="cnt-tiroLibre-Propio">0</span></div>
-        <div class="split-right" id="sr-tiroLibre-Propio" onclick="toggleTime('tiroLibre','Propio')">+ tiempo</div>
-      </div>
-      <div class="split-btn">
-        <div class="split-left" onclick="countOnly('tiroLibre','Rival')">Tiro libre R<br><span class="count-badge" id="cnt-tiroLibre-Rival">0</span></div>
-        <div class="split-right" id="sr-tiroLibre-Rival" onclick="toggleTime('tiroLibre','Rival')">+ tiempo</div>
-      </div>
-      <div class="split-btn">
-        <div class="split-left" onclick="countOnly('corner','Propio')">Corner P<br><span class="count-badge" id="cnt-corner-Propio">0</span></div>
-        <div class="split-right" id="sr-corner-Propio" onclick="toggleTime('corner','Propio')">+ tiempo</div>
-      </div>
-      <div class="split-btn">
-        <div class="split-left" onclick="countOnly('corner','Rival')">Corner R<br><span class="count-badge" id="cnt-corner-Rival">0</span></div>
-        <div class="split-right" id="sr-corner-Rival" onclick="toggleTime('corner','Rival')">+ tiempo</div>
-      </div>
-    </div>
-
-    <span class="section-label sl-prog">Progresión y transición</span>
-    <div class="actions-grid">
-      <div class="split-btn">
-        <div class="split-left" onclick="countOnly('progresion','Propio')">Progresión P<br><span class="count-badge" id="cnt-progresion-Propio">0</span></div>
-        <div class="split-right" id="sr-progresion-Propio" onclick="toggleTime('progresion','Propio')">+ tiempo</div>
-      </div>
-      <div class="split-btn">
-        <div class="split-left" onclick="countOnly('progresion','Rival')">Progresión R<br><span class="count-badge" id="cnt-progresion-Rival">0</span></div>
-        <div class="split-right" id="sr-progresion-Rival" onclick="toggleTime('progresion','Rival')">+ tiempo</div>
-      </div>
-      <div class="split-btn">
-        <div class="split-left" onclick="countOnly('transicion','Propio')">Trans. ofensiva P<br><span class="count-badge" id="cnt-transicion-Propio">0</span></div>
-        <div class="split-right" id="sr-transicion-Propio" onclick="toggleTime('transicion','Propio')">+ tiempo</div>
-      </div>
-      <div class="split-btn">
-        <div class="split-left" onclick="countOnly('transicion','Rival')">Trans. ofensiva R<br><span class="count-badge" id="cnt-transicion-Rival">0</span></div>
-        <div class="split-right" id="sr-transicion-Rival" onclick="toggleTime('transicion','Rival')">+ tiempo</div>
-      </div>
-    </div>
-
-    <span class="section-label sl-propio">Solo propio</span>
-    <div class="actions-grid">
-      <div class="split-btn">
-        <div class="split-left" onclick="countOnly('defExitosa','Propio')">Def. exitosa<br><span class="count-badge" id="cnt-defExitosa-Propio">0</span></div>
-        <div class="split-right" id="sr-defExitosa-Propio" onclick="toggleTime('defExitosa','Propio')">+ tiempo</div>
-      </div>
-      <div class="split-btn">
-        <div class="split-left" onclick="countOnly('errorNF','Propio')">Error no forz.<br><span class="count-badge" id="cnt-errorNF-Propio">0</span></div>
-        <div class="split-right" id="sr-errorNF-Propio" onclick="toggleTime('errorNF','Propio')">+ tiempo</div>
-      </div>
-      <div class="split-btn">
-        <div class="split-left" onclick="countOnly('defArea','Propio')">Def. en área<br><span class="count-badge" id="cnt-defArea-Propio">0</span></div>
-        <div class="split-right" id="sr-defArea-Propio" onclick="toggleTime('defArea','Propio')">+ tiempo</div>
-      </div>
-      <div class="split-btn">
-        <div class="split-left" onclick="countOnly('accionInd','Propio')">Acción indiv.<br><span class="count-badge" id="cnt-accionInd-Propio">0</span></div>
-        <div class="split-right" id="sr-accionInd-Propio" onclick="toggleTime('accionInd','Propio')">+ tiempo</div>
-      </div>
-    </div>
-
-    <div class="divider"></div>
-    <div class="session-btns">
-      <button class="btn btn-warning" onclick="endFirstHalf()">Fin 1° tiempo</button>
-      <button class="btn btn-danger" onclick="endSession()">Fin de sesión</button>
-    </div>
+  <div class="pos-row">
+    <button class="pos-btn pos-propio active" id="posBtn-propio" onclick="setPosesion('propio')">▶ Propio</button>
+    <button class="pos-btn pos-fuera" id="posBtn-fuera" onclick="setPosesion('fuera')">◼ Fuera</button>
+    <button class="pos-btn pos-rival" id="posBtn-rival" onclick="setPosesion('rival')">▶ Rival</button>
+  </div>
+  <div class="pos-pcts">
+    <div class="pos-pct">Propio <span id="pctPropio">—</span></div>
+    <div class="pos-pct">Rival <span id="pctRival">—</span></div>
   </div>
 
-  <div id="resultView" class="hidden resultado-section">
-    <div class="resultado-header">
-      <div class="resultado-title">Resumen de sesión</div>
-      <button class="btn" onclick="resetAll()">Nueva sesión</button>
-    </div>
-    <div id="copyArea" class="copy-area"></div>
-    <button class="btn" onclick="copyText()" style="margin-bottom:1rem;">Copiar texto</button>
-    <div id="entriesList"></div>
+  <div class="ctrl-row">
+    <button class="btn-c btn-play" id="playBtn" onclick="togglePlay()">▶ Play</button>
+    <button class="btn-c" onclick="adjustTime(-30)">-30s</button>
+    <button class="btn-c" onclick="adjustTime(-10)">-10s</button>
+    <button class="btn-c" onclick="adjustTime(10)">+10s</button>
+    <button class="btn-c" onclick="adjustTime(30)">+30s</button>
+    <button class="btn-c btn-undo" onclick="undoLast()">↩ Deshacer</button>
   </div>
+  <div class="jump-row">
+    <input class="jump-input" id="jumpInput" placeholder="mm:ss" maxlength="5"/>
+    <button class="btn-jump" onclick="jumpTo()">Ir →</button>
+  </div>
+</div>
+
+<!-- SESSION VIEW -->
+<div id="sessionView">
+<div class="content">
+
+  <!-- 1. APROXIMACION -->
+  <span class="sec-header sh-aprox">Aproximación al arco</span>
+  <div class="action-grid">
+    <button class="action-btn btn-propio" onclick="tap('aprox','Propio',this)">
+      Propio<div class="cnt" id="cnt-aprox-Propio">0</div>
+    </button>
+    <button class="action-btn btn-rival" onclick="tap('aprox','Rival',this)">
+      Rival<div class="cnt" id="cnt-aprox-Rival">0</div>
+    </button>
+  </div>
+
+  <!-- 2. SITUACION DE PELIGRO PROPIO -->
+  <span class="sec-header sh-peligro-p">Situación de peligro — Propio</span>
+  <div class="peligro-label pl-propio">
+    <span>Total situaciones</span>
+    <span class="peligro-total" id="total-peligro-Propio">0</span>
+  </div>
+  <div class="sub-grid">
+    <button class="sub-btn sub-propio" onclick="tapPeligro('Propio','Juego directo',this)">Juego directo</button>
+    <button class="sub-btn sub-propio" onclick="tapPeligro('Propio','Juego elaborado',this)">Juego elaborado</button>
+    <button class="sub-btn sub-propio" onclick="tapPeligro('Propio','Recuperación y finalización',this)">Recup. y finalización</button>
+    <button class="sub-btn sub-propio" onclick="tapPeligro('Propio','Acción individual',this)">Acción individual</button>
+    <button class="sub-btn sub-propio" onclick="tapPeligro('Propio','Remate ½ distancia',this)">Remate ½ distancia</button>
+    <button class="sub-btn sub-propio" onclick="tapPeligro('Propio','Lateral',this)">Lateral</button>
+    <button class="sub-btn sub-propio" onclick="tapPeligro('Propio','Tiro libre directo',this)">Tiro libre directo</button>
+    <button class="sub-btn sub-propio" onclick="tapPeligro('Propio','Tiro libre',this)">Tiro libre</button>
+    <button class="sub-btn sub-propio" onclick="tapPeligro('Propio','Corner',this)">Corner</button>
+    <button class="sub-btn sub-propio" onclick="tapPeligro('Propio','Error forzado',this)">Error forzado</button>
+    <button class="sub-btn sub-propio" onclick="tapPeligro('Propio','Error no forzado',this)">Error no forzado</button>
+    <button class="sub-btn sub-propio" onclick="tapPeligro('Propio','Transición campo propio',this)">Trans. campo propio</button>
+    <button class="sub-btn sub-propio" onclick="tapPeligro('Propio','Centros',this)">Centros</button>
+    <button class="sub-btn sub-propio" onclick="tapPeligro('Propio','Progresión campo propio',this)">Prog. campo propio</button>
+  </div>
+
+  <!-- 3. SITUACION DE PELIGRO RIVAL -->
+  <span class="sec-header sh-peligro-r">Situación de peligro — Rival</span>
+  <div class="peligro-label pl-rival">
+    <span>Total situaciones</span>
+    <span class="peligro-total" id="total-peligro-Rival">0</span>
+  </div>
+  <div class="sub-grid">
+    <button class="sub-btn sub-rival" onclick="tapPeligro('Rival','Juego directo',this)">Juego directo</button>
+    <button class="sub-btn sub-rival" onclick="tapPeligro('Rival','Juego elaborado',this)">Juego elaborado</button>
+    <button class="sub-btn sub-rival" onclick="tapPeligro('Rival','Recuperación y finalización',this)">Recup. y finalización</button>
+    <button class="sub-btn sub-rival" onclick="tapPeligro('Rival','Acción individual',this)">Acción individual</button>
+    <button class="sub-btn sub-rival" onclick="tapPeligro('Rival','Remate ½ distancia',this)">Remate ½ distancia</button>
+    <button class="sub-btn sub-rival" onclick="tapPeligro('Rival','Lateral',this)">Lateral</button>
+    <button class="sub-btn sub-rival" onclick="tapPeligro('Rival','Tiro libre directo',this)">Tiro libre directo</button>
+    <button class="sub-btn sub-rival" onclick="tapPeligro('Rival','Tiro libre',this)">Tiro libre</button>
+    <button class="sub-btn sub-rival" onclick="tapPeligro('Rival','Corner',this)">Corner</button>
+    <button class="sub-btn sub-rival" onclick="tapPeligro('Rival','Error forzado',this)">Error forzado</button>
+    <button class="sub-btn sub-rival" onclick="tapPeligro('Rival','Error no forzado',this)">Error no forzado</button>
+    <button class="sub-btn sub-rival" onclick="tapPeligro('Rival','Transición campo propio',this)">Trans. campo propio</button>
+    <button class="sub-btn sub-rival" onclick="tapPeligro('Rival','Centros',this)">Centros</button>
+    <button class="sub-btn sub-rival" onclick="tapPeligro('Rival','Progresión campo propio',this)">Prog. campo propio</button>
+  </div>
+
+  <!-- 4. PROGRESION, TRANSICION, CORNER, TIRO LIBRE -->
+  <span class="sec-header sh-mov">Progresión / Transición / Corner / Tiro libre</span>
+  <div class="action-grid">
+    <button class="action-btn btn-propio" onclick="tap('progresion','Propio',this)">
+      Progresión<br>Propio<div class="cnt" id="cnt-progresion-Propio">0</div>
+    </button>
+    <button class="action-btn btn-rival" onclick="tap('progresion','Rival',this)">
+      Progresión<br>Rival<div class="cnt" id="cnt-progresion-Rival">0</div>
+    </button>
+    <button class="action-btn btn-propio" onclick="tap('transicion','Propio',this)">
+      Trans. ofensiva<br>Propio<div class="cnt" id="cnt-transicion-Propio">0</div>
+    </button>
+    <button class="action-btn btn-rival" onclick="tap('transicion','Rival',this)">
+      Trans. ofensiva<br>Rival<div class="cnt" id="cnt-transicion-Rival">0</div>
+    </button>
+    <button class="action-btn btn-propio" onclick="tap('corner','Propio',this)">
+      Corner<br>Propio<div class="cnt" id="cnt-corner-Propio">0</div>
+    </button>
+    <button class="action-btn btn-rival" onclick="tap('corner','Rival',this)">
+      Corner<br>Rival<div class="cnt" id="cnt-corner-Rival">0</div>
+    </button>
+    <button class="action-btn btn-propio" onclick="tap('tiroLibre','Propio',this)">
+      Tiro libre<br>Propio<div class="cnt" id="cnt-tiroLibre-Propio">0</div>
+    </button>
+    <button class="action-btn btn-rival" onclick="tap('tiroLibre','Rival',this)">
+      Tiro libre<br>Rival<div class="cnt" id="cnt-tiroLibre-Rival">0</div>
+    </button>
+  </div>
+
+  <!-- 5. ACCIONES PROPIAS -->
+  <span class="sec-header sh-def">Acciones propias</span>
+  <div class="solo-grid">
+    <button class="solo-btn s-green" onclick="tap('movDefAcertado','Propio',this)">
+      Mov. def. acertado<div class="cnt" id="cnt-movDefAcertado-Propio">0</div>
+    </button>
+    <button class="solo-btn s-red" onclick="tap('movDefFallado','Propio',this)">
+      Mov. def. fallado<div class="cnt" id="cnt-movDefFallado-Propio">0</div>
+    </button>
+    <button class="solo-btn s-green" onclick="tap('defExitosa','Propio',this)">
+      Acc. def. exitosa<div class="cnt" id="cnt-defExitosa-Propio">0</div>
+    </button>
+    <button class="solo-btn s-red" onclick="tap('defMala','Propio',this)">
+      Acc. def. mala<div class="cnt" id="cnt-defMala-Propio">0</div>
+    </button>
+    <button class="solo-btn s-yellow" onclick="tap('errorNF','Propio',this)">
+      Error no forzado<div class="cnt" id="cnt-errorNF-Propio">0</div>
+    </button>
+    <button class="solo-btn s-blue" onclick="tap('accionInd','Propio',this)">
+      Acc. indiv. destacada<div class="cnt" id="cnt-accionInd-Propio">0</div>
+    </button>
+  </div>
+
+</div>
+
+<div class="bottom-bar">
+  <button class="btn-sess btn-halftime" onclick="endFirstHalf()">Fin 1° tiempo</button>
+  <button class="btn-sess btn-end" onclick="endSession()">Fin de sesión</button>
+</div>
+</div>
+
+<!-- RESULT VIEW -->
+<div id="resultView" class="hidden">
+<div class="result-wrap">
+  <div class="result-header">
+    <div class="result-title">Resumen</div>
+    <button class="btn-new" onclick="resetAll()">Nueva sesión</button>
+  </div>
+  <div id="copyArea" class="copy-area"></div>
+  <button class="btn-copy" onclick="copyText()">Copiar texto</button>
+  <div id="entriesList"></div>
+</div>
+</div>
 
 </div>
 <script>
 const LABELS={
-  salida:'Salida desde abajo',saque:'Saque de arco',
-  presionAlta:'Presión bloque alto',presionMedia:'Presión bloque medio',presionBaja:'Presión bloque bajo',
-  peligro:'Situación de peligro',aprox:'Aproximación al arco',
-  tiroLibre:'Tiro libre',corner:'Corner',
-  progresion:'Progresión a campo contrario',transicion:'Transición ofensiva',
-  defExitosa:'Acción defensiva exitosa',errorNF:'Error no forzado',
-  defArea:'Defensa en el área',accionInd:'Acción individual'
+  aprox:'Aproximación al arco',
+  progresion:'Progresión',
+  transicion:'Transición ofensiva',
+  corner:'Corner',
+  tiroLibre:'Tiro libre',
+  movDefAcertado:'Mov. def. acertado',
+  movDefFallado:'Mov. def. fallado',
+  defExitosa:'Acc. def. exitosa',
+  defMala:'Acc. def. mala',
+  errorNF:'Error no forzado',
+  accionInd:'Acc. indiv. destacada'
 };
-let timerSecs=0,running=false,period=1,interval=null,entries=[],openTimings={},lastAction=null;
+
+// Order for result output
+const OUTPUT_ORDER = [
+  {type:'action', key:'aprox', team:'Propio'},
+  {type:'action', key:'aprox', team:'Rival'},
+  {type:'peligro', team:'Propio'},
+  {type:'peligro', team:'Rival'},
+  {type:'action', key:'progresion', team:'Propio'},
+  {type:'action', key:'progresion', team:'Rival'},
+  {type:'action', key:'transicion', team:'Propio'},
+  {type:'action', key:'transicion', team:'Rival'},
+  {type:'action', key:'corner', team:'Propio'},
+  {type:'action', key:'corner', team:'Rival'},
+  {type:'action', key:'tiroLibre', team:'Propio'},
+  {type:'action', key:'tiroLibre', team:'Rival'},
+  {type:'action', key:'movDefAcertado', team:'Propio'},
+  {type:'action', key:'movDefFallado', team:'Propio'},
+  {type:'action', key:'defExitosa', team:'Propio'},
+  {type:'action', key:'defMala', team:'Propio'},
+  {type:'action', key:'errorNF', team:'Propio'},
+  {type:'action', key:'accionInd', team:'Propio'},
+];
+
+let timerSecs=0, running=false, period=1, interval=null;
+let entries=[], lastAction=null;
+// Posesion timeline
+let posTimeline=[], curPosTeam='propio', posStart=0;
+
 function pad(n){return String(n).padStart(2,'0');}
 function fmt(s){return pad(Math.floor(s/60))+':'+pad(s%60);}
-function tick(){timerSecs++;document.getElementById('timerDisplay').textContent=fmt(timerSecs);}
+
+function tick(){
+  timerSecs++;
+  document.getElementById('timerDisplay').textContent=fmt(timerSecs);
+  updatePct();
+}
+
 function togglePlay(){
   running=!running;
   const btn=document.getElementById('playBtn');
-  if(running){interval=setInterval(tick,1000);btn.textContent='Pausa';}
-  else{clearInterval(interval);btn.textContent='Play';}
+  if(running){interval=setInterval(tick,1000);btn.textContent='⏸ Pausa';}
+  else{clearInterval(interval);btn.textContent='▶ Play';}
 }
-function adjustTime(s){timerSecs=Math.max(0,timerSecs+s);document.getElementById('timerDisplay').textContent=fmt(timerSecs);}
+
+function adjustTime(s){
+  // Close current pos segment, adjust, reopen
+  posTimeline.push({from:posStart, to:timerSecs, team:curPosTeam});
+  timerSecs=Math.max(0,timerSecs+s);
+  posStart=timerSecs;
+  document.getElementById('timerDisplay').textContent=fmt(timerSecs);
+  updatePct();
+}
+
 function jumpTo(){
   const val=document.getElementById('jumpInput').value.trim();
   const parts=val.split(':');
   let secs=0;
-  if(parts.length===2){secs=parseInt(parts[0]||0)*60+parseInt(parts[1]||0);}
-  else if(parts.length===1&&val!==''){secs=parseInt(parts[0]||0)*60;}
-  if(!isNaN(secs)&&secs>=0){timerSecs=secs;document.getElementById('timerDisplay').textContent=fmt(timerSecs);}
+  if(parts.length===2) secs=parseInt(parts[0]||0)*60+parseInt(parts[1]||0);
+  else if(parts.length===1&&val!=='') secs=parseInt(parts[0]||0)*60;
+  if(!isNaN(secs)&&secs>=0){
+    posTimeline.push({from:posStart,to:timerSecs,team:curPosTeam});
+    timerSecs=secs;
+    posStart=timerSecs;
+    document.getElementById('timerDisplay').textContent=fmt(timerSecs);
+    updatePct();
+  }
   document.getElementById('jumpInput').value='';
 }
-document.getElementById('jumpInput').addEventListener('keydown',function(e){if(e.key==='Enter')jumpTo();});
-function countOnly(key,team){
-  entries.push({type:'count',key,team,period,time:timerSecs});
-  updateBadge(key,team);
-  lastAction={type:'count',entry:entries[entries.length-1]};
+document.getElementById('jumpInput').addEventListener('keydown',e=>{if(e.key==='Enter')jumpTo();});
+
+function setPosesion(team){
+  if(curPosTeam===team) return;
+  posTimeline.push({from:posStart,to:timerSecs,team:curPosTeam});
+  posStart=timerSecs;
+  curPosTeam=team;
+  document.querySelectorAll('.pos-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('posBtn-'+team).classList.add('active');
+  updatePct();
 }
-function toggleTime(key,team){
-  const tk=key+'-'+team;
-  const el=document.getElementById('sr-'+key+'-'+team);
-  if(openTimings[tk]!==undefined){
-    const start=openTimings[tk];
-    entries.push({type:'time',key,team,period,start,end:timerSecs});
-    updateBadge(key,team);
-    lastAction={type:'time-end',entry:entries[entries.length-1]};
-    delete openTimings[tk];
-    if(el){el.textContent='+ tiempo';el.classList.remove('recording');}
-  } else {
-    openTimings[tk]=timerSecs;
-    lastAction={type:'time-start',key,team,tk,elId:'sr-'+key+'-'+team};
-    if(el){el.textContent='■ '+fmt(timerSecs);el.classList.add('recording');}
+
+function getPosSeconds(){
+  let propio=0,rival=0;
+  posTimeline.forEach(seg=>{
+    const dur=Math.max(0,seg.to-seg.from);
+    if(seg.team==='propio') propio+=dur;
+    else if(seg.team==='rival') rival+=dur;
+  });
+  const curDur=Math.max(0,timerSecs-posStart);
+  if(curPosTeam==='propio') propio+=curDur;
+  else if(curPosTeam==='rival') rival+=curDur;
+  return{propio,rival};
+}
+
+function updatePct(){
+  const{propio,rival}=getPosSeconds();
+  const total=propio+rival;
+  if(total===0){
+    document.getElementById('pctPropio').textContent='—';
+    document.getElementById('pctRival').textContent='—';
+    return;
   }
+  document.getElementById('pctPropio').textContent=Math.round(propio/total*100)+'%';
+  document.getElementById('pctRival').textContent=Math.round(rival/total*100)+'%';
 }
-function updateBadge(key,team){
-  const el=document.getElementById('cnt-'+key+'-'+team);
-  if(!el)return;
-  el.textContent=entries.filter(e=>e.key===key&&e.team===team).length;
+
+function tap(key,team,el){
+  entries.push({type:'action',key,team,period,time:timerSecs});
+  const cnt=document.getElementById('cnt-'+key+'-'+team);
+  if(cnt) cnt.textContent=entries.filter(e=>e.type==='action'&&e.key===key&&e.team===team).length;
+  lastAction={type:'action',entry:entries[entries.length-1]};
+  flash(el);
 }
+
+function tapPeligro(team,subcat,el){
+  entries.push({type:'peligro',team,subcat,period,time:timerSecs});
+  const total=entries.filter(e=>e.type==='peligro'&&e.team===team).length;
+  document.getElementById('total-peligro-'+team).textContent=total;
+  lastAction={type:'peligro',entry:entries[entries.length-1]};
+  flash(el);
+}
+
+function flash(el){
+  el.classList.remove('flashing');
+  void el.offsetWidth;
+  el.classList.add('flashing');
+  setTimeout(()=>el.classList.remove('flashing'),200);
+}
+
 function undoLast(){
-  if(!lastAction)return;
-  if(lastAction.type==='count'){
-    const idx=entries.indexOf(lastAction.entry);
-    if(idx>-1){entries.splice(idx,1);updateBadge(lastAction.entry.key,lastAction.entry.team);}
-  } else if(lastAction.type==='time-end'){
-    const idx=entries.indexOf(lastAction.entry);
-    if(idx>-1){
-      entries.splice(idx,1);
-      const e=lastAction.entry;
-      const tk=e.key+'-'+e.team;
-      openTimings[tk]=e.start;
-      const el=document.getElementById('sr-'+e.key+'-'+e.team);
-      if(el){el.textContent='■ '+fmt(e.start);el.classList.add('recording');}
-      updateBadge(e.key,e.team);
-    }
-  } else if(lastAction.type==='time-start'){
-    delete openTimings[lastAction.tk];
-    const el=document.getElementById(lastAction.elId);
-    if(el){el.textContent='+ tiempo';el.classList.remove('recording');}
+  if(!lastAction) return;
+  const e=lastAction.entry;
+  const idx=entries.indexOf(e);
+  if(idx>-1) entries.splice(idx,1);
+  if(e.type==='action'){
+    const cnt=document.getElementById('cnt-'+e.key+'-'+e.team);
+    if(cnt) cnt.textContent=entries.filter(x=>x.type==='action'&&x.key===e.key&&x.team===e.team).length;
+  } else if(e.type==='peligro'){
+    const total=entries.filter(x=>x.type==='peligro'&&x.team===e.team).length;
+    document.getElementById('total-peligro-'+e.team).textContent=total;
   }
   lastAction=null;
 }
+
 function endFirstHalf(){
-  // Stop timer, reset to 00:00, wait for user to press play
-  if(running){clearInterval(interval);running=false;document.getElementById('playBtn').textContent='Play';}
-  period=2;
-  timerSecs=0;
+  posTimeline.push({from:posStart,to:timerSecs,team:curPosTeam});
+  posStart=0;
+  if(running) togglePlay();
+  period=2; timerSecs=0;
   document.getElementById('timerDisplay').textContent='00:00';
-  document.getElementById('periodBadge').textContent='2° tiempo';
-  openTimings={};
-  document.querySelectorAll('.split-right.recording').forEach(el=>{el.textContent='+ tiempo';el.classList.remove('recording');});
+  document.getElementById('periodPill').textContent='2° Tiempo';
 }
+
 function endSession(){
-  if(running)togglePlay();
+  if(running) togglePlay();
+  posTimeline.push({from:posStart,to:timerSecs,team:curPosTeam});
   buildResult();
   document.getElementById('sessionView').classList.add('hidden');
   document.getElementById('resultView').classList.remove('hidden');
 }
+
 function buildResult(){
-  const grouped={};
-  entries.forEach(e=>{
-    const label=LABELS[e.key]+' — '+e.team;
-    if(!grouped[label])grouped[label]={counts:[],times:[]};
-    if(e.type==='count')grouped[label].counts.push(e);
-    else grouped[label].times.push(e);
-  });
-  let text='',html='';
-  for(const [label,data] of Object.entries(grouped)){
-    if(data.counts.length===0&&data.times.length===0)continue;
-    text+=label+'\n';
-    html+='<div class="cat-block"><div class="cat-name">'+label+'</div>';
-    if(data.counts.length>0){
-      const line='Conteo: '+data.counts.length+' ('+data.counts.map(e=>(e.period===1?'1°T':'2°T')+' '+fmt(e.time)).join(', ')+')';
-      text+='  '+line+'\n';
-      html+='<div class="entry-row"><span class="entry-text">'+line+'</span><button class="entry-del" onclick="delCountEntry(this)">×</button></div>';
-    }
-    data.times.forEach(e=>{
-      const line=(e.period===1?'1°T':'2°T')+' | '+fmt(e.start)+' - '+fmt(e.end);
-      text+='  '+line+'\n';
-      const idx=entries.indexOf(e);
-      html+='<div class="entry-row"><span class="entry-text">'+line+'</span><button class="entry-del" onclick="delTimeEntry(this,'+idx+')">×</button></div>';
+  const{propio,rival}=getPosSeconds();
+  const total=propio+rival;
+  const totalFuera=posTimeline.filter(s=>s.team==='fuera').reduce((a,s)=>a+Math.max(0,s.to-s.from),0);
+  const pP=total>0?Math.round(propio/total*100):0;
+  const pR=total>0?Math.round(rival/total*100):0;
+
+  let text='';
+  let html='';
+
+  // POSESION
+  text+='POSESIÓN\n';
+  text+='Propio: '+pP+'% — Rival: '+pR+'%\n';
+  text+='Tiempo en juego: '+fmt(total)+' — Fuera: '+fmt(totalFuera)+'\n\n';
+
+  // Split entries by period
+  const e1=entries.filter(e=>e.period===1);
+  const e2=entries.filter(e=>e.period===2);
+
+  function buildPeriodText(ents, label){
+    if(ents.length===0) return '';
+    let t=label+'\n\n';
+    let hasContent=false;
+
+    OUTPUT_ORDER.forEach(o=>{
+      if(o.type==='action'){
+        const matches=ents.filter(e=>e.type==='action'&&e.key===o.key&&e.team===o.team);
+        if(matches.length===0) return;
+        hasContent=true;
+        const times=matches.map(e=>fmt(e.time)).join(', ');
+        t+=LABELS[o.key]+' '+o.team+' ('+matches.length+'): '+times+'\n';
+      } else if(o.type==='peligro'){
+        const matches=ents.filter(e=>e.type==='peligro'&&e.team===o.team);
+        if(matches.length===0) return;
+        hasContent=true;
+        t+='Situación de peligro '+o.team+' ('+matches.length+'):\n';
+        matches.forEach(e=>{ t+='  '+fmt(e.time)+' — '+e.subcat+'\n'; });
+      }
     });
-    text+='\n';
-    html+='</div>';
+    return hasContent?t:'';
   }
-  document.getElementById('copyArea').textContent=text.trim();
-  document.getElementById('entriesList').innerHTML=html;
+
+  function buildPeriodHTML(ents, label){
+    if(ents.length===0) return '';
+    let h='<div class="cat-block"><div class="cat-name">'+label+'</div>';
+    let hasContent=false;
+
+    OUTPUT_ORDER.forEach(o=>{
+      if(o.type==='action'){
+        const matches=ents.filter(e=>e.type==='action'&&e.key===o.key&&e.team===o.team);
+        if(matches.length===0) return;
+        hasContent=true;
+        const times=matches.map(e=>fmt(e.time)).join(', ');
+        const line=LABELS[o.key]+' '+o.team+' ('+matches.length+'): '+times;
+        h+='<div class="entry-row"><span class="entry-text">'+line+'</span><button class="entry-del" onclick="delEntry(this)">×</button></div>';
+      } else if(o.type==='peligro'){
+        const matches=ents.filter(e=>e.type==='peligro'&&e.team===o.team);
+        if(matches.length===0) return;
+        hasContent=true;
+        h+='<div class="entry-row"><span class="entry-text" style="font-weight:600;">Situación de peligro '+o.team+' ('+matches.length+')</span></div>';
+        matches.forEach((e,i)=>{
+          const line='  '+fmt(e.time)+' — '+e.subcat;
+          const idx=entries.indexOf(e);
+          h+='<div class="entry-row" style="padding-left:24px;"><span class="entry-text">'+line+'</span><button class="entry-del" onclick="delPeligroEntry(this,'+idx+',\''+o.team+'\')">×</button></div>';
+        });
+      }
+    });
+    if(!hasContent) return '';
+    return h+'</div>';
+  }
+
+  const t1=buildPeriodText(e1,'PRIMER TIEMPO');
+  const t2=buildPeriodText(e2,'SEGUNDO TIEMPO');
+  text+=t1;
+  if(t1&&t2) text+='\n';
+  text+=t2;
+
+  const h1=buildPeriodHTML(e1,'Primer tiempo');
+  const h2=buildPeriodHTML(e2,'Segundo tiempo');
+
+  // Posesion block in copy area
+  const posBlock='POSESIÓN\nPropio: '+pP+'% — Rival: '+pR+'%\nTiempo en juego: '+fmt(total)+' — Fuera: '+fmt(totalFuera)+'\n\n';
+  document.getElementById('copyArea').textContent=(posBlock+text).trim();
+
+  // Posesion HTML
+  const posHTML='<div class="cat-block"><div class="cat-name">Posesión</div>'
+    +'<div class="entry-row"><span class="entry-text">Propio: '+pP+'% — Rival: '+pR+'%</span></div>'
+    +'<div class="entry-row"><span class="entry-text">Tiempo en juego: '+fmt(total)+' — Fuera: '+fmt(totalFuera)+'</span></div>'
+    +'</div>';
+
+  document.getElementById('entriesList').innerHTML=posHTML+h1+h2;
 }
-function delCountEntry(btn){btn.closest('.entry-row').remove();rebuildCopyArea();}
-function delTimeEntry(btn,idx){entries.splice(idx,1);btn.closest('.entry-row').remove();rebuildCopyArea();}
-function rebuildCopyArea(){
-  let text='',lastCat='';
-  document.querySelectorAll('#entriesList .entry-row').forEach(row=>{
-    const cat=row.closest('.cat-block').querySelector('.cat-name').textContent;
-    if(cat!==lastCat){text+=(lastCat?'\n':'')+cat+'\n';lastCat=cat;}
-    text+='  '+row.querySelector('.entry-text').textContent+'\n';
+
+function delEntry(btn){
+  btn.closest('.entry-row').remove();
+  rebuildCopy();
+}
+
+function delPeligroEntry(btn,idx,team){
+  entries.splice(idx,1);
+  btn.closest('.entry-row').remove();
+  // Update header count
+  const blocks=document.querySelectorAll('#entriesList .cat-block');
+  blocks.forEach(block=>{
+    const rows=block.querySelectorAll('.entry-row');
+    rows.forEach(row=>{
+      const txt=row.querySelector('.entry-text');
+      if(txt&&txt.style.fontWeight==='600'&&txt.textContent.includes('Situación de peligro '+team)){
+        const count=block.querySelectorAll('.entry-row[style*="padding-left"]').length;
+        txt.textContent='Situación de peligro '+team+' ('+count+')';
+      }
+    });
   });
-  document.getElementById('copyArea').textContent=text.trim();
+  rebuildCopy();
 }
+
+function rebuildCopy(){
+  let text='';
+  const copyEl=document.getElementById('copyArea');
+  // Keep posesion line (first 3 lines)
+  const existing=copyEl.textContent.split('\n');
+  const posLines=existing.slice(0,4).join('\n');
+  
+  let body='';
+  let lastSection='';
+  document.querySelectorAll('#entriesList .cat-block').forEach(block=>{
+    const catName=block.querySelector('.cat-name').textContent;
+    if(catName==='Posesión') return;
+    let blockText='';
+    block.querySelectorAll('.entry-row').forEach(row=>{
+      const txt=row.querySelector('.entry-text');
+      if(!txt) return;
+      const pl=row.style.paddingLeft;
+      blockText+=(pl?'  ':'')+txt.textContent+'\n';
+    });
+    if(blockText){
+      if(catName!==lastSection){body+=catName.toUpperCase()+'\n\n';lastSection=catName;}
+      body+=blockText;
+    }
+  });
+  copyEl.textContent=(posLines+'\n\n'+body).trim();
+}
+
 function copyText(){
   navigator.clipboard.writeText(document.getElementById('copyArea').textContent).then(()=>{
-    const btn=event.target;btn.textContent='Copiado!';setTimeout(()=>btn.textContent='Copiar texto',1500);
+    const btn=document.querySelector('.btn-copy');
+    btn.textContent='¡Copiado!';
+    setTimeout(()=>btn.textContent='Copiar texto',1500);
   });
 }
+
 function resetAll(){
-  timerSecs=0;running=false;period=1;entries=[];openTimings={};lastAction=null;
+  timerSecs=0;running=false;period=1;entries=[];lastAction=null;
+  posTimeline=[];curPosTeam='propio';posStart=0;
   clearInterval(interval);
   document.getElementById('timerDisplay').textContent='00:00';
-  document.getElementById('periodBadge').textContent='1° tiempo';
-  document.getElementById('playBtn').textContent='Play';
-  document.querySelectorAll('.count-badge').forEach(el=>el.textContent='0');
-  document.querySelectorAll('.split-right').forEach(el=>{el.textContent='+ tiempo';el.classList.remove('recording');});
+  document.getElementById('periodPill').textContent='1° Tiempo';
+  document.getElementById('playBtn').textContent='▶ Play';
+  document.querySelectorAll('.cnt').forEach(el=>el.textContent='0');
+  document.getElementById('total-peligro-Propio').textContent='0';
+  document.getElementById('total-peligro-Rival').textContent='0';
+  document.querySelectorAll('.pos-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('posBtn-propio').classList.add('active');
+  document.getElementById('pctPropio').textContent='—';
+  document.getElementById('pctRival').textContent='—';
   document.getElementById('sessionView').classList.remove('hidden');
   document.getElementById('resultView').classList.add('hidden');
   document.getElementById('entriesList').innerHTML='';

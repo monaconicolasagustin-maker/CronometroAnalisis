@@ -322,6 +322,7 @@ body{background:#111;color:#f0ede8;font-family:'Barlow',sans-serif;min-height:10
   </div>
 
   <!-- 5. ACCIONES PROPIAS -->
+
   <span class="sec-header sh-def">Acciones propias</span>
   <div class="solo-grid">
     <button class="solo-btn s-green" onclick="tap('movDefAcertado','Propio',this)">
@@ -342,6 +343,51 @@ body{background:#111;color:#f0ede8;font-family:'Barlow',sans-serif;min-height:10
     <button class="solo-btn s-blue" onclick="tap('accionInd','Propio',this)">
       Acc. indiv. destacada<div class="cnt" id="cnt-accionInd-Propio">0</div>
     </button>
+  </div>
+
+  <!-- 6. GOL -->
+  <span class="sec-header" style="background:#1a2e1a;color:#5de8a0;">Gol</span>
+
+  <div class="peligro-label pl-propio" style="margin-bottom:5px;">
+    <span>Gol Propio</span>
+    <span class="peligro-total" id="total-gol-Propio">0</span>
+  </div>
+  <div class="sub-grid" style="margin-bottom:8px;">
+    <button class="sub-btn sub-propio" onclick="tapGol('Propio','Juego directo',this)">Juego directo</button>
+    <button class="sub-btn sub-propio" onclick="tapGol('Propio','Juego elaborado',this)">Juego elaborado</button>
+    <button class="sub-btn sub-propio" onclick="tapGol('Propio','Recuperación y finalización',this)">Recup. y finalización</button>
+    <button class="sub-btn sub-propio" onclick="tapGol('Propio','Acción individual',this)">Acción individual</button>
+    <button class="sub-btn sub-propio" onclick="tapGol('Propio','Remate ½ distancia',this)">Remate ½ distancia</button>
+    <button class="sub-btn sub-propio" onclick="tapGol('Propio','Lateral',this)">Lateral</button>
+    <button class="sub-btn sub-propio" onclick="tapGol('Propio','Tiro libre directo',this)">Tiro libre directo</button>
+    <button class="sub-btn sub-propio" onclick="tapGol('Propio','Tiro libre',this)">Tiro libre</button>
+    <button class="sub-btn sub-propio" onclick="tapGol('Propio','Corner',this)">Corner</button>
+    <button class="sub-btn sub-propio" onclick="tapGol('Propio','Error forzado',this)">Error forzado</button>
+    <button class="sub-btn sub-propio" onclick="tapGol('Propio','Error no forzado',this)">Error no forzado</button>
+    <button class="sub-btn sub-propio" onclick="tapGol('Propio','Transición campo propio',this)">Trans. campo propio</button>
+    <button class="sub-btn sub-propio" onclick="tapGol('Propio','Centros',this)">Centros</button>
+    <button class="sub-btn sub-propio" onclick="tapGol('Propio','Progresión campo propio',this)">Prog. campo propio</button>
+  </div>
+
+  <div class="peligro-label pl-rival" style="margin-bottom:5px;">
+    <span>Gol Rival</span>
+    <span class="peligro-total" id="total-gol-Rival">0</span>
+  </div>
+  <div class="sub-grid" style="margin-bottom:8px;">
+    <button class="sub-btn sub-rival" onclick="tapGol('Rival','Juego directo',this)">Juego directo</button>
+    <button class="sub-btn sub-rival" onclick="tapGol('Rival','Juego elaborado',this)">Juego elaborado</button>
+    <button class="sub-btn sub-rival" onclick="tapGol('Rival','Recuperación y finalización',this)">Recup. y finalización</button>
+    <button class="sub-btn sub-rival" onclick="tapGol('Rival','Acción individual',this)">Acción individual</button>
+    <button class="sub-btn sub-rival" onclick="tapGol('Rival','Remate ½ distancia',this)">Remate ½ distancia</button>
+    <button class="sub-btn sub-rival" onclick="tapGol('Rival','Lateral',this)">Lateral</button>
+    <button class="sub-btn sub-rival" onclick="tapGol('Rival','Tiro libre directo',this)">Tiro libre directo</button>
+    <button class="sub-btn sub-rival" onclick="tapGol('Rival','Tiro libre',this)">Tiro libre</button>
+    <button class="sub-btn sub-rival" onclick="tapGol('Rival','Corner',this)">Corner</button>
+    <button class="sub-btn sub-rival" onclick="tapGol('Rival','Error forzado',this)">Error forzado</button>
+    <button class="sub-btn sub-rival" onclick="tapGol('Rival','Error no forzado',this)">Error no forzado</button>
+    <button class="sub-btn sub-rival" onclick="tapGol('Rival','Transición campo propio',this)">Trans. campo propio</button>
+    <button class="sub-btn sub-rival" onclick="tapGol('Rival','Centros',this)">Centros</button>
+    <button class="sub-btn sub-rival" onclick="tapGol('Rival','Progresión campo propio',this)">Prog. campo propio</button>
   </div>
 
 </div>
@@ -401,6 +447,8 @@ const OUTPUT_ORDER = [
   {type:'action', key:'defMala', team:'Propio'},
   {type:'action', key:'errorNF', team:'Propio'},
   {type:'action', key:'accionInd', team:'Propio'},
+  {type:'gol', team:'Propio'},
+  {type:'gol', team:'Rival'},
 ];
 
 let timerSecs=0, running=false, period=1, interval=null;
@@ -501,6 +549,14 @@ function tapPeligro(team,subcat,el){
   flash(el);
 }
 
+function tapGol(team,subcat,el){
+  entries.push({type:'gol',team,subcat,period,time:timerSecs});
+  const total=entries.filter(e=>e.type==='gol'&&e.team===team).length;
+  document.getElementById('total-gol-'+team).textContent=total;
+  lastAction={type:'gol',entry:entries[entries.length-1]};
+  flash(el);
+}
+
 function flash(el){
   el.classList.remove('flashing');
   void el.offsetWidth;
@@ -519,6 +575,9 @@ function undoLast(){
   } else if(e.type==='peligro'){
     const total=entries.filter(x=>x.type==='peligro'&&x.team===e.team).length;
     document.getElementById('total-peligro-'+e.team).textContent=total;
+  } else if(e.type==='gol'){
+    const total=entries.filter(x=>x.type==='gol'&&x.team===e.team).length;
+    document.getElementById('total-gol-'+e.team).textContent=total;
   }
   lastAction=null;
 }
@@ -577,6 +636,12 @@ function buildResult(){
         hasContent=true;
         t+='Situación de peligro '+o.team+' ('+matches.length+'):\n';
         matches.forEach(e=>{ t+='  '+fmt(e.time)+' — '+e.subcat+'\n'; });
+      } else if(o.type==='gol'){
+        const matches=ents.filter(e=>e.type==='gol'&&e.team===o.team);
+        if(matches.length===0) return;
+        hasContent=true;
+        t+='Gol '+o.team+' ('+matches.length+'):\n';
+        matches.forEach(e=>{ t+='  '+fmt(e.time)+' — '+e.subcat+'\n'; });
       }
     });
     return hasContent?t:'';
@@ -600,6 +665,16 @@ function buildResult(){
         if(matches.length===0) return;
         hasContent=true;
         h+='<div class="entry-row"><span class="entry-text" style="font-weight:600;">Situación de peligro '+o.team+' ('+matches.length+')</span></div>';
+        matches.forEach((e,i)=>{
+          const line='  '+fmt(e.time)+' — '+e.subcat;
+          const idx=entries.indexOf(e);
+          h+='<div class="entry-row" style="padding-left:24px;"><span class="entry-text">'+line+'</span><button class="entry-del" onclick="delPeligroEntry(this,'+idx+',\''+o.team+'\')">×</button></div>';
+        });
+      } else if(o.type==='gol'){
+        const matches=ents.filter(e=>e.type==='gol'&&e.team===o.team);
+        if(matches.length===0) return;
+        hasContent=true;
+        h+='<div class="entry-row"><span class="entry-text" style="font-weight:600;">Gol '+o.team+' ('+matches.length+')</span></div>';
         matches.forEach((e,i)=>{
           const line='  '+fmt(e.time)+' — '+e.subcat;
           const idx=entries.indexOf(e);

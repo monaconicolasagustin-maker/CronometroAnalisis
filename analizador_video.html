@@ -499,6 +499,10 @@ const OUTPUT_ORDER = [
 ];
 
 let speed=1;
+let timerSecs=0, running=false, period=1, interval=null;
+let entries=[], lastAction=null;
+let posTimeline=[], curPosTeam='propio', posStart=0;
+
 function toggleSpeed(){
   speed = speed===1 ? 2 : 1;
   const btn=document.getElementById('speedBtn');
@@ -526,10 +530,6 @@ function tapSistema(team, sistema, el){
   });
   flash(el);
 }
-let entries=[], lastAction=null;
-// Posesion timeline
-let posTimeline=[], curPosTeam='propio', posStart=0;
-
 function pad(n){return String(n).padStart(2,'0');}
 function fmt(s){return pad(Math.floor(s/60))+':'+pad(s%60);}
 
